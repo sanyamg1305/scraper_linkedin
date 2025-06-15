@@ -19,9 +19,6 @@ genai.configure(api_key=GOOGLE_API_KEY)
 @st.cache_resource
 def get_driver():
     try:
-        # Install ChromeDriver
-        chromedriver_autoinstaller.install()
-        
         options = webdriver.ChromeOptions()
         options.add_argument('--start-maximized')
         options.add_argument('--disable-blink-features=AutomationControlled')
@@ -29,11 +26,12 @@ def get_driver():
         options.add_argument('--no-sandbox')
         options.add_argument('--headless')
         options.add_argument('--disable-dev-shm-usage')
-        options.binary_location = "/usr/bin/chromium-browser"
+        options.binary_location = "/usr/bin/chromium"
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option('useAutomationExtension', False)
         
-        driver = webdriver.Chrome(options=options)
+        service = Service(executable_path="/usr/bin/chromedriver")
+        driver = webdriver.Chrome(service=service, options=options)
         driver.execute_cdp_cmd('Network.setUserAgentOverride', {"userAgent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'})
         return driver
     except Exception as e:
