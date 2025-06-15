@@ -4,5 +4,4 @@ beautifulsoup4==4.12.3
 pandas==2.3.0
 webdriver-manager==4.0.1
 google-generativeai==0.8.5
-chromium-binary==1.0.0
-chromedriver-binary==120.0.6099.109.0 
+chromedriver-autoinstaller==0.6.3 
