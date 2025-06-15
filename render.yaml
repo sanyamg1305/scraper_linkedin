@@ -3,9 +3,8 @@ services:
     name: linkedin-scraper
     env: python
     buildCommand: |
-      chmod +x setup.sh
-      ./setup.sh
-      pip install -r requirements.txt
+      chmod +x build.sh
+      ./build.sh
     startCommand: streamlit run app.py --server.port $PORT
     envVars:
       - key: PYTHON_VERSION
