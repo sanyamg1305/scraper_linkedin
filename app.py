@@ -1,15 +1,10 @@
 import streamlit as st
-
-# MUST be the first Streamlit command
 st.set_page_config(page_title="LinkedIn AI Agent", layout="wide")
-
-# Sanity check to verify Render environment
-import os
-st.write("✅ Chrome exists:", os.path.exists("/usr/bin/google-chrome"))
-st.write("✅ Chromedriver exists:", os.path.exists("/usr/bin/chromedriver"))
 
 import pandas as pd
 import time
+import os
+import subprocess
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -17,6 +12,25 @@ from selenium.common.exceptions import WebDriverException, SessionNotCreatedExce
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 import google.generativeai as genai
+import chromedriver_autoinstaller
+
+# --------------- SETUP CHROME AND CHROMEDRIVER ----------------
+def ensure_chrome_installed():
+    chrome_path = "/usr/bin/google-chrome"
+    driver_path = "/usr/bin/chromedriver"
+
+    chrome_exists = os.path.exists(chrome_path)
+    chromedriver_exists = os.path.exists(driver_path)
+
+    st.write(f"✅ Chrome exists: {chrome_exists}")
+    st.write(f"✅ Chromedriver exists: {chromedriver_exists}")
+
+    if not chrome_exists:
+        st.error("Google Chrome is not installed. Please ensure Chrome is installed on your Render environment.")
+    if not chromedriver_exists:
+        chromedriver_autoinstaller.install()
+
+ensure_chrome_installed()
 
 # --------------- CONFIG ----------------
 GOOGLE_API_KEY = "AIzaSyD8sY5E0dj-6yKyXjqaGH3a5CSQYEdI4yo"
@@ -31,14 +45,13 @@ def get_driver():
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument('--disable-notifications')
         options.add_argument('--disable-blink-features=AutomationControlled')
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        options.add_experimental_option('useAutomationExtension', False)
+        options.add_argument('--start-maximized')
         options.binary_location = "/usr/bin/google-chrome"
-
         service = Service(executable_path="/usr/bin/chromedriver")
+
         driver = webdriver.Chrome(service=service, options=options)
         driver.execute_cdp_cmd('Network.setUserAgentOverride', {
-            "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            "userAgent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         })
         return driver
     except Exception as e:
@@ -65,12 +78,14 @@ def get_fresh_driver():
 def scrape_linkedin_profile(driver, url):
     max_retries = 3
     retry_count = 0
+
     while retry_count < max_retries:
         try:
             if not ensure_valid_session(driver):
                 driver = get_fresh_driver()
                 if not driver:
                     return None
+
             if not url.startswith('https://www.linkedin.com/'):
                 url = 'https://www.linkedin.com/' + url.lstrip('/')
             driver.get(url)
@@ -110,9 +125,7 @@ def generate_fallback_message(name, headline):
 
 I came across your profile and was impressed by your experience as {headline}. Your professional journey and expertise in this field caught my attention.
 
-I would love to connect and learn more about your work and experiences. It would be great to exchange insights and potentially collaborate in the future.
-
-Looking forward to connecting!"""
+I would love to connect and learn more about your work and experiences. Looking forward to connecting!"""
 
 def generate_message(name, headline, about):
     try:
@@ -124,15 +137,13 @@ def generate_message(name, headline, about):
         "{about}"
 
         Requirements:
-        1. Message should be at least 4 lines long
-        2. Mention their company name if visible in their profile
-        3. Reference their recent activity or achievements if mentioned
-        4. Keep it professional but warm and engaging
-        5. Show genuine interest in their work
-        6. Include a specific reason for connecting
-        7. End with a clear call to action
-
-        Format the message in a natural, conversational tone.
+        1. At least 4 lines long
+        2. Mention company name if visible
+        3. Reference activity or achievements if mentioned
+        4. Keep it professional but warm
+        5. Show genuine interest
+        6. Give a reason to connect
+        7. Clear call to action
         """
 
         model = genai.GenerativeModel('gemini-1.0-pro')
@@ -158,7 +169,7 @@ def search_execs_on_google(company_name, driver):
     return exec_data
 
 # ---------------- STREAMLIT UI ----------------
-
+st.title("🤖 LinkedIn AI Agent")
 tab1, tab2 = st.tabs(["📨 Hyperpersonalization", "🏢 Company Research"])
 
 with tab1:
@@ -172,15 +183,11 @@ with tab1:
         else:
             driver = get_driver()
             if not driver:
-                st.error("Failed to initialize browser. Please refresh the page and try again.")
+                st.error("Failed to initialize browser. Please refresh and try again.")
                 st.stop()
+
             st.warning("Please log in to LinkedIn manually in the opened browser.")
-            try:
-                driver.get("https://www.linkedin.com/login")
-                time.sleep(2)
-            except Exception as e:
-                st.error(f"Error loading LinkedIn: {str(e)}")
-                st.stop()
+            driver.get("https://www.linkedin.com/login")
             st.info("After logging in, go back to Streamlit and start scraping.")
 
             if st.button("Start Generating Messages"):
@@ -200,7 +207,6 @@ with tab1:
                     except Exception as e:
                         st.error(f"Error processing profile {row['URL']}: {str(e)}")
                         continue
-
                     progress_bar.progress((i + 1) / total_profiles)
 
                 if messages:
@@ -221,7 +227,7 @@ with tab2:
         driver = get_driver()
         st.warning("Please log in to LinkedIn manually in the opened browser.")
         driver.get("https://www.linkedin.com/login")
-        st.info("After logging in, go back to Streamlit and start the search.")
+        st.info("After logging in, go back and start the search.")
 
         execs = search_execs_on_google(company_name, driver)
         if execs:
@@ -231,4 +237,4 @@ with tab2:
             csv = exec_df.to_csv(index=False).encode('utf-8')
             st.download_button("📥 Download CSV", data=csv, file_name="executives.csv", mime="text/csv")
         else:
-            st.info("No executives found. Try a broader company name or different spelling.")
+            st.info("No executives found. Try broader company name or spelling.")
