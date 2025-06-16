@@ -5,7 +5,7 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.10
-    buildCommand: ./build.sh && pip install -r requirements.txt
-    startCommand: streamlit run app.py --server.port=10000 --server.address=0.0.0.0
+    buildCommand: apt-get update && apt-get install -y wget curl unzip gnupg2 && pip install -r requirements.txt
+    startCommand: bash start.sh
     plan: free
     region: oregon
