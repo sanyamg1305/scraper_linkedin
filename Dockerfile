@@ -1,21 +1,23 @@
-# 1. Base on an image that already has Chrome + ChromeDriver
-FROM selenium/standalone-chrome:latest
+FROM python:3.10-slim
 
-# 2. Install Python 3.10 and pip
-USER root
-RUN apt-get update && \
-    apt-get install -y python3.10 python3-pip && \
-    rm -rf /var/lib/apt/lists/*
+# Install Chrome and dependencies
+RUN apt-get update && apt-get install -y \
+    wget unzip curl gnupg \
+    chromium chromium-driver \
+    && apt-get clean
 
-# 3. Create workdir and copy in your app
-WORKDIR /usr/src/app
-COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+# Set display env variable
+ENV DISPLAY=:99
 
+# Set working directory
+WORKDIR /app
+
+# Copy files
 COPY . .
 
-# 4. Expose Streamlit’s default port
-EXPOSE 8501
+# Install dependencies
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
 
-# 5. Launch Streamlit
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# Run the app
+CMD ["streamlit", "run", "app.py", "--server.port=8000", "--server.address=0.0.0.0"]
