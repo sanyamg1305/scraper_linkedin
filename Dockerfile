@@ -1,37 +1,21 @@
-# Use Python 3.10 slim as base
-FROM python:3.10-slim
+# 1. Base on an image that already has Chrome + ChromeDriver
+FROM selenium/standalone-chrome:latest
 
-# Install system deps, Chrome & Chromedriver
-RUN apt-get update && apt-get install -y \
-      wget gnupg2 unzip ca-certificates \
-      fonts-liberation libasound2 libatk1.0-0 libatk-bridge2.0-0 \
-      libcups2 libdbus-1-3 libx11-xcb1 libxcomposite1 libxdamage1 \
-      libxrandr2 libxss1 libxtst6 libnss3 libxkbcommon0 libgbm1 \
-      libpango-1.0-0 libpangocairo-1.0-0 libatspi2.0-0 \
-      --no-install-recommends && \
-    wget -q -O /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
-    apt-get install -y /tmp/chrome.deb && \
-    rm /tmp/chrome.deb && \
-    CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+') && \
-    wget -qO /tmp/chromedriver.zip "https://chromedriver.storage.googleapis.com/${CHROME_VERSION}/chromedriver_linux64.zip" && \
-    unzip /tmp/chromedriver.zip -d /usr/local/bin/ && \
-    rm /tmp/chromedriver.zip && \
-    chmod +x /usr/local/bin/chromedriver && \
-    apt-get purge -y --auto-remove wget gnupg2 unzip && \
+# 2. Install Python 3.10 and pip
+USER root
+RUN apt-get update && \
+    apt-get install -y python3.10 python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
-# Create app directory
+# 3. Create workdir and copy in your app
 WORKDIR /usr/src/app
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Copy requirements and install
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy application code
 COPY . .
 
-# Expose Streamlit port
+# 4. Expose Streamlit’s default port
 EXPOSE 8501
 
-# Launch Streamlit
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.enableCORS=false"]
+# 5. Launch Streamlit
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
