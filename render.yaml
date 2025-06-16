@@ -1,7 +1,7 @@
 services:
   - type: web
     name: linkedinscraper
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./Dockerfile   # <-- point at the above file
     envVars:
       - key: PORT
         value: '8501'
