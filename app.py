@@ -1,9 +1,7 @@
 import streamlit as st
 
-# ───────────────────────────────────────────────────────────────────────────────
-# MUST be the first Streamlit command
+# ─── MUST be the first Streamlit command ───
 st.set_page_config(page_title="LinkedIn AI Agent", layout="wide")
-# ───────────────────────────────────────────────────────────────────────────────
 
 import pandas as pd
 import time
@@ -13,11 +11,11 @@ from selenium.common.exceptions import WebDriverException, SessionNotCreatedExce
 from bs4 import BeautifulSoup
 import google.generativeai as genai
 
-# ─── CONFIG ────────────────────────────────────────────────────────────────────
+# ─── CONFIG ───
 GOOGLE_API_KEY = "AIzaSyD8sY5E0dj-6yKyXjqaGH3a5CSQYEdI4yo"
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# ─── SELENIUM DRIVER SETUP ──────────────────────────────────────────────────────
+# ─── SELENIUM DRIVER SETUP ───
 @st.cache_resource
 def get_driver():
     try:
@@ -65,7 +63,7 @@ def get_fresh_driver():
             pass
     return get_driver()
 
-# ─── SCRAPE & MESSAGE GEN ─────────────────────────────────────────────────────
+# ─── SCRAPE & MESSAGE GEN ───
 def scrape_linkedin_profile(driver, url):
     retries = 3
     for _ in range(retries):
@@ -130,7 +128,7 @@ Requirements:
         st.error(f"❌ Error generating message: {e}")
         return generate_fallback_message(name, headline)
 
-# ─── STREAMLIT UI ─────────────────────────────────────────────────────────────
+# ─── STREAMLIT UI ───
 st.title("🤖 LinkedIn AI Agent")
 tabs = st.tabs(["📨 Hyperpersonalization", "🏢 Company Research"])
 
