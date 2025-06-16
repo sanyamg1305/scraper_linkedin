@@ -1,10 +1,10 @@
 import streamlit as st
 
-# ─── Streamlit Page Config ────────────────────────────────────────────────────
-# MUST be the first Streamlit command in your script
+# ───────────────────────────────────────────────────────────────────────────────
+# MUST be the first Streamlit command
 st.set_page_config(page_title="LinkedIn AI Agent", layout="wide")
+# ───────────────────────────────────────────────────────────────────────────────
 
-# ─── Imports ───────────────────────────────────────────────────────────────────
 import pandas as pd
 import time
 from selenium import webdriver
@@ -13,23 +13,24 @@ from selenium.common.exceptions import WebDriverException, SessionNotCreatedExce
 from bs4 import BeautifulSoup
 import google.generativeai as genai
 
-# ─── CONFIG ───────────────────────────────────────────────────────────────────
+# ─── CONFIG ────────────────────────────────────────────────────────────────────
 GOOGLE_API_KEY = "AIzaSyD8sY5E0dj-6yKyXjqaGH3a5CSQYEdI4yo"
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# ─── SELENIUM DRIVER SETUP ────────────────────────────────────────────────────
+# ─── SELENIUM DRIVER SETUP ──────────────────────────────────────────────────────
 @st.cache_resource
 def get_driver():
     try:
         chrome_path = "/usr/bin/google-chrome"
-        driver_path = "/usr/local/bin/chromedriver"
+        driver_path = "/usr/bin/chromedriver"
+
         options = webdriver.ChromeOptions()
         options.binary_location = chrome_path
         options.add_argument("--headless")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-notifications")
         options.add_argument("--disable-blink-features=AutomationControlled")
+        options.add_argument("--disable-notifications")
         options.add_argument("--start-maximized")
 
         service = Service(executable_path=driver_path)
@@ -64,10 +65,10 @@ def get_fresh_driver():
             pass
     return get_driver()
 
-# ─── SCRAPING & MESSAGE GENERATION ───────────────────────────────────────────
+# ─── SCRAPE & MESSAGE GEN ─────────────────────────────────────────────────────
 def scrape_linkedin_profile(driver, url):
     retries = 3
-    for attempt in range(retries):
+    for _ in range(retries):
         try:
             if not ensure_valid_session(driver):
                 driver = get_fresh_driver()
@@ -78,11 +79,10 @@ def scrape_linkedin_profile(driver, url):
                 url = "https://www.linkedin.com/" + url.lstrip("/")
             driver.get(url)
             time.sleep(5)
-            soup = BeautifulSoup(driver.page_source, "html.parser")
 
+            soup = BeautifulSoup(driver.page_source, "html.parser")
             name_tag = soup.find("h1")
             name = name_tag.get_text(strip=True) if name_tag else ""
-
             headline_tag = soup.find("div", class_="text-body-medium")
             headline = headline_tag.get_text(strip=True) if headline_tag else ""
 
@@ -116,14 +116,12 @@ About section:
 
 Requirements:
 1. At least 4 lines long
-2. Mention their company name if visible
-3. Reference recent activity or achievements if mentioned
+2. Mention company name if visible
+3. Reference recent activity or achievements
 4. Professional but warm
-5. Genuine interest
+5. Show genuine interest
 6. Specific reason for connecting
 7. Clear call to action
-
-Format naturally.
 """
         model = genai.GenerativeModel("gemini-1.0-pro")
         resp = model.generate_content(prompt)
@@ -149,9 +147,9 @@ with tabs[0]:
                 st.error("Browser init failed. Refresh and retry.")
                 st.stop()
 
-            st.warning("Log in to LinkedIn in the popped browser window.")
+            st.warning("Log in to LinkedIn in the browser window that opens.")
             driver.get("https://www.linkedin.com/login")
-            st.info("After login, click \"Start Generating Messages\" below.")
+            st.info("After login, click “Start Generating Messages” below.")
 
             if st.button("Start Generating Messages"):
                 results = []
@@ -178,9 +176,14 @@ with tabs[1]:
     company = st.text_input("Company Name")
     if st.button("Search Executives"):
         driver = get_driver()
-        st.warning("Log in to LinkedIn in the popped browser window.")
+        if not driver:
+            st.error("Browser init failed. Refresh and retry.")
+            st.stop()
+
+        st.warning("Log in to LinkedIn in the browser window that opens.")
         driver.get("https://www.linkedin.com/login")
-        st.info("After login, click \"Search Executives\" again.")
+        st.info("After login, click “Search Executives” again.")
+
         if company:
             execs = []
             roles = ["CEO", "CTO", "CMO", "COO", "Founder", "VP"]
@@ -194,6 +197,7 @@ with tabs[1]:
                     title = a.get_text()
                     if "linkedin.com/in" in link:
                         execs.append({"Title": title, "LinkedIn URL": link})
+
             if execs:
                 edf = pd.DataFrame(execs)
                 st.success(f"Found {len(execs)} execs")
