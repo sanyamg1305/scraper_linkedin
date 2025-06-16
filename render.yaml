@@ -1,17 +1,11 @@
 services:
   - type: web
     name: linkedinscraper
-    env: python
-    buildCommand: |
-      apt-get update && apt-get install -y wget unzip curl gnupg ca-certificates
-      wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-      apt install -y ./google-chrome-stable_current_amd64.deb
-      curl -sSL https://chromedriver.storage.googleapis.com/LATEST_RELEASE > version.txt
-      VERSION=$(cat version.txt)
-      wget https://chromedriver.storage.googleapis.com/${VERSION}/chromedriver_linux64.zip
-      unzip chromedriver_linux64.zip
-      mv chromedriver /usr/bin/chromedriver
-      chmod +x /usr/bin/chromedriver
-      chmod +x /usr/bin/google-chrome
-      pip install -r requirements.txt
-    startCommand: streamlit run app.py --server.port $PORT --server.enableCORS false
+    runtime: python
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10
+    buildCommand: ./build.sh && pip install -r requirements.txt
+    startCommand: streamlit run app.py --server.port=10000 --server.address=0.0.0.0
+    plan: free
+    region: oregon
