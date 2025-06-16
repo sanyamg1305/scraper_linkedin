@@ -1,7 +1,6 @@
-streamlit==1.45.1
-selenium==4.18.1
-beautifulsoup4==4.12.3
-pandas==2.3.0
-webdriver-manager==4.0.1
-google-generativeai==0.8.5
-chromedriver-autoinstaller==0.6.3 
+streamlit
+pandas
+selenium
+chromedriver-autoinstaller
+beautifulsoup4
+google-generativeai
