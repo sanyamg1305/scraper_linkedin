@@ -1,23 +1,32 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
-# Install Chrome and dependencies
 RUN apt-get update && apt-get install -y \
-    wget unzip curl gnupg \
-    chromium chromium-driver \
-    && apt-get clean
+    wget \
+    unzip \
+    curl \
+    chromium \
+    chromium-driver \
+    libglib2.0-0 \
+    libnss3 \
+    libgconf-2-4 \
+    libfontconfig1 \
+    libxss1 \
+    libappindicator1 \
+    libindicator7 \
+    fonts-liberation \
+    libasound2 \
+    xdg-utils \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
-# Set display env variable
 ENV DISPLAY=:99
 
-# Set working directory
 WORKDIR /app
+COPY . /app
 
-# Copy files
-COPY . .
-
-# Install dependencies
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-# Run the app
-CMD ["streamlit", "run", "app.py", "--server.port=8000", "--server.address=0.0.0.0"]
+EXPOSE 8501
+
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
