@@ -1,9 +1,7 @@
 streamlit
-selenium
-chromedriver-autoinstaller
 pandas
-beautifulsoup4
-google-api-python-client
-google-auth
-google-auth-httplib2
-google-auth-oauthlib
+selenium
+webdriver-manager
+bs4
+google-generativeai
+chromedriver-autoinstaller
