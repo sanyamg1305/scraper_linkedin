@@ -40,6 +40,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 EXPOSE 8080
-CMD bash -c "streamlit run app.py --server.port=\${PORT:-8080} --server.enableCORS=false"
+CMD ["sh", "-c", "streamlit run app.py --server.port=${PORT:-8080} --server.enableCORS=false"]
 
 
